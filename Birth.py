@@ -181,7 +181,35 @@ for col in ["overall_grade", "sex_ed_requirement_grade", "content_grade"]:
 
 # normalize state
 grades["state"] = grades["state"].astype(str).str.strip().str.lower()
+df_letter = (
+    nchs.merge(grades[["state", "overall_grade"]], on="state", how="inner")
+        .dropna(subset=["overall_grade", "teen_birth_rate"])
+)
 
+# Order grades from best to worst
+
+grade_order_letter = ["a", "a-", "b+", "b", "b-", "c+", "c", "c-", "d+", "d", "d-", "f"]
+
+# Compute average teen birth rate by content grade
+content_means_letter = (
+    df_letter.groupby("overall_grade")["teen_birth_rate"]
+    .mean()
+    .reindex(grade_order_letter)
+    .dropna()
+)
+
+plt.figure(figsize=(10, 5))
+sns.barplot(
+    x=[g.upper() for g in content_means_letter.index],
+    y=content_means_letter.values,
+    palette="viridis"
+)
+plt.title("Average Teen Birth Rate by Overall Grade (SIECUS State Profiles, 2025)")
+plt.xlabel("Overall Grade (Letter)")
+plt.ylabel("Teen Birth Rate (per 1,000, ages 15–19)")
+plt.xticks(rotation=45)
+plt.tight_layout()
+plt.show()
 
 grade_map = {
     "a":4.0, "a-":3.7,
